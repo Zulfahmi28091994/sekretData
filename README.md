@@ -1,0 +1,2 @@
+# sekretData
+untuk menyimpan data
