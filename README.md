@@ -1,2 +1,2 @@
-# sekretData
-untuk menyimpan data
+# sekretData 
+untuk menyimpan data & kode Skretariat MUDI
