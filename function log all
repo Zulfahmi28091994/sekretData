@@ -1,0 +1,41 @@
+class SomeController extends CI_Controller {
+    public function __construct() {
+        parent::__construct();
+        $this->load->model('Visitor_model');
+        $this->load->library('user_agent');  // Load user agent library
+
+        // Dapatkan IP pengunjung
+        $ip_address = $this->input->ip_address();
+
+        // Mendapatkan negara berdasarkan IP (opsional)
+        $country = $this->get_country_by_ip($ip_address);
+
+        // Data pengunjung
+        $visitor_data = array(
+            'ip_address'   => $ip_address,
+            'browser'      => $this->agent->browser(),
+            'platform'     => $this->agent->platform(),
+            'tanggal_waktu'=> date('Y-m-d H:i:s'),
+            'tanggal_trafik'=> date('Y-m-d'),
+            'idrouteweb'   => 1, // Sesuaikan dengan route ID Anda
+            'country'      => $country
+        );
+
+        // Simpan data ke database
+        $this->Visitor_model->save_visitor_log($visitor_data);
+    }
+
+    // Fungsi-fungsi controller lain
+    public function index() {
+        $this->load->view('some_view');
+    }
+
+    // Fungsi untuk mendapatkan negara berdasarkan IP
+    private function get_country_by_ip($ip_address) {
+        $url = "http://ip-api.com/json/{$ip_address}";
+        $response = file_get_contents($url);
+        $details = json_decode($response, true);
+
+        return isset($details['country']) ? $details['country'] : 'Unknown';
+    }
+}
