@@ -1,0 +1,99 @@
+<?php
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class Md extends CI_Controller
+{
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->load->model('Menu_model', 'informasi');
+        $this->load->model('Menu_model', 'pendataan');
+        $this->load->model('Model_Rekap', 'statistik');
+        $this->load->library('form_validation');
+        $this->load->library('email'); // Load library email
+        $this->load->library('user_agent');  // Load user agent library
+    }
+
+    // Fungsi untuk mendapatkan negara berdasarkan IP
+    private function get_country_by_ip($ip_address)
+    {
+        $url = "http://ip-api.com/json/{$ip_address}";
+        $response = file_get_contents($url);
+        $details = json_decode($response, true);
+
+        return isset($details['country']) ? $details['country'] : 'Unknown';
+    }
+
+    // Fungsi untuk menyimpan data pengunjung
+    private function log_visitor()
+    {
+        // Dapatkan IP pengunjung
+        $ip_address = $this->input->ip_address();
+
+        // Mendapatkan negara berdasarkan IP (opsional)
+        $country = $this->get_country_by_ip($ip_address);
+
+        // Data pengunjung
+        $this->visitor_data = array(
+            'ip_address'   => $ip_address,
+            'browser'      => $this->agent->browser(),
+            'platform'     => $this->agent->platform(),
+            'tanggal_waktu'=> date('Y-m-d H:i:s'),
+            'tanggal_trafik'=> date('Y-m-d'),
+            'idrouteweb'   => $this->router->fetch_method(), // Menyimpan nama fungsi sebagai idrouteweb
+            'country'      => $country
+        );
+
+        // Simpan data ke database
+        $this->pendataan->save_visitor_log($this->visitor_data);
+    }
+
+    public function index()
+    {
+        $data['title'] = 'Sekretariat MUDI';
+
+        // Log pengunjung
+        $this->log_visitor();
+
+        // Ambil data pengaduan
+        $data['sekretariat'] = $this->db->get('dBpengaduan_website')->result_array();
+        
+        // Ambil data statistik dari model dan gabungkan dengan data yang ada
+        $data = array_merge($data, $this->statistik->get_statistics());
+
+        // Validasi form
+        $this->form_validation->set_rules('nama_dBpengaduan_website', 'Foto', 'required', [
+            'required' => 'Nama Tidak Boleh Kosong! '
+        ]);   
+        $this->form_validation->set_rules('email_dBpengaduan_website', 'Email', 'required', [
+            'required' => 'No Hp/WA Tidak Boleh Kosong! '
+        ]);  
+        $this->form_validation->set_rules('subjek_dBpengaduan_website', 'Subjek', 'required', [
+            'required' => 'Subjek Tidak Boleh Kosong! '
+        ]);  
+        $this->form_validation->set_rules('pesan_dBpengaduan_website', 'Pesan', 'required', [
+            'required' => 'Pesan Tidak Boleh Kosong! '
+        ]);  
+        
+        // Proses jika validasi gagal
+        if ($this->form_validation->run() == false) {
+            $this->load->view('mdTemplate/home/header', $data); 
+            $this->load->view('md/index', $data);
+            $this->load->view('mdTemplate/home/footer');
+        } else {
+            // Proses simpan data pengaduan
+            $data = [
+                 'nama_dBpengaduan_website' => $this->input->post('nama_dBpengaduan_website'),
+                 'email_dBpengaduan_website' => $this->input->post('email_dBpengaduan_website'),
+                 'subjek_dBpengaduan_website' => $this->input->post('subjek_dBpengaduan_website'),
+                 'pesan_dBpengaduan_website' => $this->input->post('pesan_dBpengaduan_website'),
+                 'tgl_dBpengaduan_website' => date('Y-m-d H:i:s'), // Memperbaiki pengambilan tanggal
+             ]; 
+             
+             $this->db->insert('dBpengaduan_website', $data);
+             $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Pesan Anda Berhasil Dikirim!</div>');
+             redirect('md');
+        }             
+    }
+}
