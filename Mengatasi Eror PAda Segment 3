@@ -1,0 +1,14 @@
+        public function tampilkanBrosurMUDI($role_id = null)
+    {
+        $data['title'] = 'Data EMIS Guru ';
+        // Log pengunjung           
+        $this->log_visitor();
+        $data['fileGambar'] = null;
+
+        if ($role_id !== null) {
+            $data['fileGambar'] = $this->db->get_where('dBdataPengaturanAplikasi', ['idkodePengaturanAplikasi' => $role_id])->row_array();
+        }
+    
+        $this->load->view('mdBagian/bidangPendaftaran/tampilkanBrosurMUDI', $data);     
+
+    }
