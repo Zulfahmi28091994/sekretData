@@ -1,0 +1,69 @@
+<tbody>
+    <?php 
+    $i = 1;
+
+    // Ambil role dari pengaturanAplikasi6
+    $role = $idSantri['pengaturanAplikasi6'];
+
+    // Query untuk mendapatkan data penerima PIP
+    $query = "SELECT * FROM dBPIPPenerima WHERE id_TA_dataPenerimaPIPpertahun IN ('$role') ORDER BY namaRek_dataPenerimaPIPpertahun";
+    $dataRek = $this->db->query($query)->result_array();
+
+    // Kumpulkan semua nis_dataPenerimaPIPpertahun untuk melakukan query santri sekali saja
+    $nisList = [];
+    foreach ($dataRek as $Dr) {
+        $nisList[] = $Dr['nis_dataPenerimaPIPpertahun'];
+    }
+
+    // Cek apakah ada nis untuk diproses
+    if (count($nisList) > 0) {
+        // Lakukan query santri berdasarkan nis yang terkumpul
+        $nisString = implode("','", $nisList);
+        $queryN = "SELECT * FROM dBdataSantri WHERE nis IN ('$nisString') ORDER BY nama DESC";
+        $dSantri = $this->db->query($queryN)->result_array();
+
+        // Simpan data santri ke dalam array dengan nis sebagai key
+        $santriData = [];
+        foreach ($dSantri as $m) {
+            $santriData[$m['nis']] = $m;
+        }
+    }
+
+    ?>
+
+    <?php foreach ($dataRek as $Dr) : ?>
+        <?php
+        $nis = $Dr['nis_dataPenerimaPIPpertahun'];
+        $santri = isset($santriData[$nis]) ? $santriData[$nis] : null;
+        ?>
+
+        <tr>
+            <td><?= $i; ?></td>
+            <td><?= $santri ? $santri['nama'] : ''; ?></td>
+            <td><?= $santri ? $santri['nisn'] : ''; ?></td>
+            <td><?= $santri ? $santri['nik'] : ''; ?></td>
+            <td><?= $santri ? $santri['nis'] : $Dr['nis_dataPenerimaPIPpertahun']; ?></td>
+            <td><?= $Dr['jenjang_dataPenerimaPIPpertahun']; ?></td>
+
+            <td><?= $santri ? $santri['ssantri'] . '.' . $santri['kss'] . '.' . $santri['rombel'] : ''; ?></td>
+            <td><?= $santri ? $santri['jenis_kelamin'] : ''; ?></td>
+            <td>
+                <?php if ($santri && $santri['lokasiSantriMenetap'] == "1") : ?>
+                    <span class="badge bg-green"> MUDI Induk </span>
+                <?php elseif ($santri) : ?>
+                    <span class="badge bg-blue"> MUDI II </span>
+                <?php endif; ?>
+            </td>
+            <td>
+                <?php if ($santri) : ?>
+                    <a href="<?= base_url('mdPendataan/detailProfileSantri/' . $santri['idKode_santri']); ?>" class="badge bg-green" target="_blank"> Lihat Detail</a>
+                    <a type="button" class="badge bg-orange" href="<?= base_url('mdPendataan/suratSPTJMsantriPip/' . $Dr['id_dataPenerimaPIPpertahun']); ?>" target="_blank"><i class="fa fa-print"></i></a>
+                <?php else : ?>
+                    <span class="badge bg-red">Data Tidak Ditemukan</span>
+                <?php endif; ?>
+            </td>
+        </tr>
+
+        <?php $i++; ?>
+    <?php endforeach; ?>
+</tbody>
