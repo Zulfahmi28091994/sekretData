@@ -40,7 +40,7 @@
                 }
 
                 // Token API
-                var token = "Bearer nyo01Token02Sekret10Md"; // Token dengan format Bearer
+                var token = "Bearer token"; // Token dengan format Bearer
 
                 // Tampilkan loading indicator
                 $('#loading').show();
