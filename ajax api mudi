@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Santri Viewer</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>API Santri Viewer</h1>
+    
+    <!-- Input untuk NIS -->
+    <label for="nis">Masukkan NIS:</label>
+    <input type="text" id="nis" placeholder="Contoh: 212100" required>
+    
+    <br><br>
+
+    <!-- Tombol Kirim -->
+    <button id="fetchSantri">Ambil Data</button>
+    
+    <br><br>
+
+    <!-- Area untuk Hasil Respons -->
+    <h2>Hasil API:</h2>
+    <pre id="apiResult" style="border: 1px solid #ddd; padding: 10px; background: #f9f9f9;"></pre>
+
+    <!-- Loading Indicator -->
+    <div id="loading" style="display: none;">Loading...</div>
+
+    <script>
+        $(document).ready(function() {
+            $('#fetchSantri').click(function() {
+                // Ambil nilai NIS dari input
+                var nis = $('#nis').val();
+                
+                // Pastikan NIS tidak kosong
+                if (!nis) {
+                    alert("Harap masukkan NIS!");
+                    return;
+                }
+
+                // Token API
+                var token = "Bearer nyo01Token02Sekret10Md"; // Token dengan format Bearer
+
+                // Tampilkan loading indicator
+                $('#loading').show();
+
+                // Lakukan permintaan AJAX ke API
+                $.ajax({
+                    url: "https://sekretariatmudi.web.id/mdApiSekret", // Ganti dengan URL API Anda
+                    method: "POST",
+                    headers: {
+                        "Authorization": token // Kirim token melalui header
+                    },
+                    data: JSON.stringify({ nis: nis }), // Data yang dikirim ke API
+                    contentType: "application/json",
+                    success: function(response) {
+                        // Sembunyikan loading indicator
+                        $('#loading').hide();
+                        
+                        // Tampilkan respons API di area hasil
+                        $('#apiResult').text(JSON.stringify(response, null, 4));
+                    },
+                    error: function(xhr) {
+                        // Sembunyikan loading indicator
+                        $('#loading').hide();
+                        
+                        // Tampilkan pesan error jika API gagal
+                        $('#apiResult').text("Error: " + xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
