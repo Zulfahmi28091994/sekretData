@@ -1,0 +1,97 @@
+<div class="modal fade gantiFoto" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4 class="modal-title" id="myModalLabel2">Ganti Foto Profil</h4>
+            </div>
+            <div class="modal-body">
+                <h4>Pilih File</h4>
+                <input type="file" id="fotoprofileSantri" name="fotoprofileSantri" class="form-control" accept="image/*">
+                <div id="crop-container" style="display:none; margin-top:20px;">
+                    <img id="preview-image" style="max-width: 100%; display: block;">
+                </div>
+                <div id="background-options" style="margin-top: 20px; display: none;">
+                    <button type="button" id="red-background" class="btn btn-danger btn-sm">Latar Belakang Merah</button>
+                    <button type="button" id="blue-background" class="btn btn-primary btn-sm">Latar Belakang Biru</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-success" id="upload-button">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<script>
+    let cropper;
+    const input = document.getElementById('fotoprofileSantri');
+    const preview = document.getElementById('preview-image');
+    const cropContainer = document.getElementById('crop-container');
+    const backgroundOptions = document.getElementById('background-options');
+    const uploadButton = document.getElementById('upload-button');
+
+    // Ketika file dipilih
+    input.addEventListener('change', function (event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                cropContainer.style.display = 'block';
+                backgroundOptions.style.display = 'block';
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(preview, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Ganti latar belakang merah
+    document.getElementById('red-background').addEventListener('click', function () {
+        if (cropper) {
+            const canvas = cropper.getCroppedCanvas();
+            const context = canvas.getContext('2d');
+            context.globalCompositeOperation = 'destination-over';
+            context.fillStyle = 'red';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            preview.src = canvas.toDataURL();
+        }
+    });
+
+    // Ganti latar belakang biru
+    document.getElementById('blue-background').addEventListener('click', function () {
+        if (cropper) {
+            const canvas = cropper.getCroppedCanvas();
+            const context = canvas.getContext('2d');
+            context.globalCompositeOperation = 'destination-over';
+            context.fillStyle = 'blue';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            preview.src = canvas.toDataURL();
+        }
+    });
+
+    // Unggah hasil
+    uploadButton.addEventListener('click', function () {
+        if (cropper) {
+            const canvas = cropper.getCroppedCanvas();
+            canvas.toBlob(function (blob) {
+                const formData = new FormData();
+                formData.append('fotoprofileSantri', blob);
+                formData.append('idKode_santri', '<?= $idSantri["idKode_santri"]; ?>');
+                fetch('<?= base_url("mdPendataan/uploadFotoProfileSantri"); ?>', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json())
+                  .then(data => alert('Foto berhasil diunggah'))
+                  .catch(err => alert('Terjadi kesalahan: ' + err));
+            });
+        }
+    });
+</script>
