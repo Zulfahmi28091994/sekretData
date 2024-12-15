@@ -1,0 +1,96 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Fontee extends CI_Controller {
+
+    public function webhook() {
+        // Set header untuk JSON response
+        header('Content-Type: application/json; charset=utf-8');
+
+        // Ambil data dari webhook
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+
+        // Simpan data ke log untuk debugging
+        file_put_contents('webhook_log.txt', print_r($data, true), FILE_APPEND);
+
+        // Ambil data dari webhook
+        $device = $data['device'] ?? ''; // ID perangkat
+        $sender = $data['sender'] ?? ''; // Nomor WhatsApp pengirim
+        $message = strtolower(trim($data['message'] ?? '')); // Pesan yang dikirim
+        $member = $data['member'] ?? ''; // Anggota grup (jika ada)
+        $name = $data['name'] ?? ''; // Nama pengirim (jika ada)
+        $location = $data['location'] ?? ''; // Lokasi pengirim (jika ada)
+
+        // Tangani perintah berdasarkan isi pesan
+        if ($message === "test") {
+            $reply = [
+                "message" => "Webhook Fontee bekerja dengan baik!"
+            ];
+        } elseif ($message === "sal") {
+            // Contoh: Ambil saldo dari database
+            $this->load->model('User_model');
+            $saldo = $this->User_model->get_saldo_by_phone($sender);
+
+            if ($saldo !== null) {
+                $reply = [
+                    "message" => "Saldo Anda adalah Rp " . number_format($saldo, 0, ',', '.')
+                ];
+            } else {
+                $reply = [
+                    "message" => "Nomor WhatsApp Anda tidak terdaftar dalam sistem kami."
+                ];
+            }
+        } elseif ($message === "image") {
+            $reply = [
+                "message" => "Pesan gambar",
+                "url" => "https://filesamples.com/samples/image/jpg/sample_640%C3%97426.jpg"
+            ];
+        } else {
+            $reply = [
+                "message" => "Maaf, saya tidak mengenali perintah ini. Gunakan kata kunci berikut:\n\n- Test\n- Sal\n- Image"
+            ];
+        }
+
+        // Kirim balasan via Fontee
+        $this->send_fonnte($sender, $reply);
+    }
+
+    private function send_fonnte($target, $data) {
+        // URL API Fontee
+        $fontee_api_url = "https://api.fonnte.com/send";
+        $token = "APIFONTEE"; // Ganti dengan token Anda
+
+        // Siapkan data POST
+        $postData = [
+            'target' => $target,
+            'message' => $data['message']
+        ];
+
+        // Tambahkan file jika ada
+        if (isset($data['url'])) {
+            $postData['url'] = $data['url'];
+        }
+        if (isset($data['filename'])) {
+            $postData['filename'] = $data['filename'];
+        }
+
+        // Header
+        $headers = [
+            "Authorization: $token"
+        ];
+
+        // Gunakan cURL untuk mengirim permintaan
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $fontee_api_url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        return $response;
+    }
+}
