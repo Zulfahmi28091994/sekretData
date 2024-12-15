@@ -1,0 +1,29 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class User_model extends CI_Model {
+
+    // Fungsi untuk mengambil saldo berdasarkan nomor WhatsApp
+    public function get_saldo_by_phone($phone_number) {
+        $this->db->select('saldo');
+        $this->db->from('users'); // Ganti dengan nama tabel Anda
+        $this->db->where('phone_number', $phone_number);
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            return $query->row()->saldo;
+        }
+        return null; // Jika nomor tidak ditemukan
+    }
+}
+
+
+
+CREATE TABLE `users` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(100) NOT NULL,
+    `phone_number` VARCHAR(15) NOT NULL UNIQUE,
+    `saldo` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
